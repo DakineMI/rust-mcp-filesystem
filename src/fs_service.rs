@@ -28,14 +28,35 @@ use utils::{
     write_zip_entry,
 };
 use walkdir::WalkDir;
-
 use crate::{
     error::{ServiceError, ServiceResult},
     tools::EditOperation,
+    tools::ApplyPatchOperation,
 };
 
 const SNIPPET_MAX_LENGTH: usize = 200;
 const SNIPPET_BACKWARD_CHARS: usize = 30;
+
+/// Configuration for regex replacement operations
+#[derive(Debug, Clone)]
+struct RegexReplacementConfig {
+    /// Maximum allowed length for escaped regex patterns
+    max_pattern_length: usize,
+    /// Maximum allowed growth factor for replacement content
+    max_growth_factor: usize,
+    /// Maximum allowed input content length
+    max_content_length: usize,
+}
+
+impl Default for RegexReplacementConfig {
+    fn default() -> Self {
+        Self {
+            max_pattern_length: 1000,
+            max_growth_factor: 10,
+            max_content_length: 10 * 1024 * 1024, // 10MB
+        }
+    }
+}
 
 pub struct FileSystemService {
     allowed_path: Vec<PathBuf>,
@@ -149,7 +170,7 @@ impl FileSystemService {
         })
     }
 
-    fn detect_line_ending(&self, text: &str) -> &str {
+    pub fn detect_line_ending(&self, text: &str) -> &str {
         if text.contains("\r\n") {
             "\r\n"
         } else if text.contains('\r') {
@@ -774,6 +795,70 @@ impl FileSystemService {
         Ok(formatted_diff)
     }
 
+    pub async fn apply_patch_edits<P: AsRef<Path>>(
+        &self,
+        file_path: P,
+        edits: Vec<ApplyPatchOperation>,
+        dry_run: Option<bool>,
+        save_to: Option<&Path>,
+    ) -> ServiceResult<String> {
+        let valid_path = self.validate_path(file_path.as_ref())?;
+        let content_str = tokio::fs::read_to_string(&valid_path).await?;
+        let original_line_ending = self.detect_line_ending(&content_str);
+        let content_str = normalize_line_endings(&content_str);
+        let mut modified_content = content_str.clone();
+
+        for edit in edits {
+            let mode = edit.mode.as_deref().unwrap_or("exact");
+            match mode {
+                "regex" => {
+                    let config = RegexReplacementConfig::default();
+                    modified_content = self.perform_regex_replacement(
+                        &modified_content,
+                        &edit.old_text,
+                        edit.new_text.as_str(),
+                        &config,
+                    )?;
+                }
+                "exact" => {
+                    modified_content = modified_content.replace(&edit.old_text, &edit.new_text);
+                }
+                _ => {
+                    return Err(ServiceError::FromString("Unknown mode".to_string()));
+                }
+            }
+        }
+
+        let diff = self.create_unified_diff(
+            &content_str,
+            &modified_content,
+            Some(file_path.as_ref().display().to_string()),
+        );
+
+        let mut num_backticks = 3;
+        while diff.contains(&"`".repeat(num_backticks)) {
+            num_backticks += 1;
+        }
+        let formatted_diff = format!(
+            "{}`\n{}\n{}`",
+            "`".repeat(num_backticks),
+            diff,
+            "`".repeat(num_backticks)
+        );
+
+        let is_dry_run = dry_run.unwrap_or(false);
+        if !is_dry_run {
+            let mut out_content = modified_content.clone();
+            if original_line_ending != "\n" {
+                out_content = out_content.replace("\n", original_line_ending);
+            }
+            let write_path = save_to.unwrap_or(&valid_path);
+            tokio::fs::write(write_path, out_content).await?;
+        }
+
+        Ok(formatted_diff)
+    }
+
     pub fn escape_regex(&self, text: &str) -> String {
         // Covers special characters in regex engines (RE2, PCRE, JS, Python)
         const SPECIAL_CHARS: &[char] = &[
@@ -790,6 +875,67 @@ impl FileSystemService {
         }
 
         escaped
+    }
+
+    /// Performs regex-based text replacement with comprehensive validation and error handling
+    fn perform_regex_replacement(
+        &self,
+        content: &str,
+        search_pattern: &str,
+        replacement_text: &str,
+        config: &RegexReplacementConfig,
+    ) -> ServiceResult<String> {
+        // Early validation - check for empty search pattern
+        if search_pattern.is_empty() {
+            return Err(ServiceError::FromString(
+                "Cannot perform regex replacement with empty search pattern".to_string()
+            ));
+        }
+
+        // Validate content size to prevent memory exhaustion
+        if content.len() > config.max_content_length {
+            return Err(ServiceError::FromString(format!(
+                "Content too large for regex replacement: {} bytes (max: {} bytes)",
+                content.len(),
+                config.max_content_length
+            )));
+        }
+
+        // Escape the search pattern and validate its complexity
+        let escaped_pattern = self.escape_regex(search_pattern);
+
+        if escaped_pattern.len() > config.max_pattern_length {
+            return Err(ServiceError::FromString(format!(
+                "Regex pattern too complex: escaped pattern length {} exceeds maximum of {} characters",
+                escaped_pattern.len(),
+                config.max_pattern_length
+            )));
+        }
+
+        // Compile regex with detailed error context
+        let regex = regex::Regex::new(&escaped_pattern)
+            .map_err(|e| {
+                ServiceError::FromString(format!(
+                    "Failed to compile regex pattern '{}': {}. Original search text: '{}'",
+                    escaped_pattern, e, search_pattern
+                ))
+            })?;
+
+        // Perform the replacement
+        let replaced_content = regex.replace_all(content, replacement_text);
+        let result_string = replaced_content.into_owned();
+
+        // Validate result size to prevent memory exhaustion from replacement
+        let growth_factor = if content.is_empty() { 0 } else { result_string.len() / content.len() };
+        if growth_factor > config.max_growth_factor {
+            return Err(ServiceError::FromString(format!(
+                "Regex replacement resulted in excessive content growth: {}x factor (max allowed: {}x)",
+                growth_factor,
+                config.max_growth_factor
+            )));
+        }
+
+        Ok(result_string)
     }
 
     // Searches the content of a file for occurrences of the given query string.

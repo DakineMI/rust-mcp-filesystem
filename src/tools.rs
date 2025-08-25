@@ -1,6 +1,7 @@
 mod create_directory;
 mod directory_tree;
 mod edit_file;
+mod apply_patch;
 mod get_file_info;
 mod list_allowed_directories;
 mod list_directory;
@@ -16,6 +17,7 @@ mod zip_unzip;
 pub use create_directory::CreateDirectoryTool;
 pub use directory_tree::DirectoryTreeTool;
 pub use edit_file::{EditFileTool, EditOperation};
+pub use apply_patch::{ApplyPatchTool, ApplyPatchOperation};
 pub use get_file_info::GetFileInfoTool;
 pub use list_allowed_directories::ListAllowedDirectoriesTool;
 pub use list_directory::ListDirectoryTool;
@@ -37,6 +39,7 @@ tool_box!(
         CreateDirectoryTool,
         DirectoryTreeTool,
         EditFileTool,
+        ApplyPatchTool,
         GetFileInfoTool,
         ListAllowedDirectoriesTool,
         ListDirectoryTool,
@@ -61,6 +64,7 @@ impl FileSystemTools {
             | FileSystemTools::MoveFileTool(_)
             | FileSystemTools::WriteFileTool(_)
             | FileSystemTools::EditFileTool(_)
+            | FileSystemTools::ApplyPatchTool(_)
             | FileSystemTools::ZipFilesTool(_)
             | FileSystemTools::UnzipFileTool(_)
             | FileSystemTools::ZipDirectoryTool(_) => true,

@@ -75,9 +75,8 @@ impl ServerHandler for MyServerHandler {
         initialize_request: InitializeRequest,
         runtime: &dyn McpServer,
     ) -> std::result::Result<InitializeResult, RpcError> {
-        runtime
-            .set_client_details(initialize_request.params.clone())
-            .map_err(|err| RpcError::internal_error().with_message(format!("{err}")))?;
+        // Set client details if supported by the runtime
+        let _ = runtime.set_client_details(initialize_request.params.clone());
 
         let mut server_info = runtime.server_info().to_owned();
         // Provide compatibility for clients using older MCP protocol versions.
@@ -116,6 +115,9 @@ impl ServerHandler for MyServerHandler {
             }
             FileSystemTools::EditFileTool(params) => {
                 EditFileTool::run_tool(params, &self.fs_service).await
+            }
+            FileSystemTools::ApplyPatchTool(params) => {
+                ApplyPatchTool::run_tool(params, &self.fs_service).await
             }
             FileSystemTools::CreateDirectoryTool(params) => {
                 CreateDirectoryTool::run_tool(params, &self.fs_service).await
