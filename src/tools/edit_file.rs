@@ -10,9 +10,7 @@ use crate::fs_service::FileSystemService;
 /// Represents a text replacement operation.
 pub struct EditOperation {
     /// Text to search for - must match exactly.
-    #[serde(rename = "oldText")]
     pub old_text: String,
-    #[serde(rename = "newText")]
     /// Text to replace the matched text with.
     pub new_text: String,
 }
@@ -38,7 +36,6 @@ pub struct EditFileTool {
     pub edits: Vec<EditOperation>,
     /// Preview changes using git-style diff format without applying them.
     #[serde(
-        rename = "dryRun",
         default,
         skip_serializing_if = "std::option::Option::is_none"
     )]

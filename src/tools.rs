@@ -1,4 +1,4 @@
-mod search_replace;
+mod search_and_replace;
 mod create_directory;
 mod directory_tree;
 mod edit_file;

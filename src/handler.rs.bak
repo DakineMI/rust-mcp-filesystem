@@ -61,7 +61,7 @@ impl MyServerHandler {
         CallToolError::new(ServiceError::FromString(error_msg))
     }
 
-    fn analyze_json_error(error: &str, _tool_name: &str) -> String {
+    fn analyze_json_error(error: &str, tool_name: &str) -> String {
         if error.contains("missing field") {
             let field = error.split("missing field `").nth(1)
                 .and_then(|s| s.split('`').next())

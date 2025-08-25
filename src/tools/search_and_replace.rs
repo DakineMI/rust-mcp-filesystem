@@ -7,12 +7,10 @@ use rust_mcp_sdk::schema::{schema_utils::CallToolError, CallToolResult};
 use crate::fs_service::FileSystemService;
 
 #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, JsonSchema)]
-/// Represents a text replacement operation for search_replace.
+/// Represents a text replacement operation for search_and_replace.
 pub struct SearchReplaceOperation {
     /// Text to search for - must match exactly or as regex.
-    #[serde(rename = "oldText")]
     pub old_text: String,
-    #[serde(rename = "newText")]
     /// Text to replace the matched text with.
     pub new_text: String,
     /// Mode: "exact" (default) or "regex".
@@ -21,7 +19,7 @@ pub struct SearchReplaceOperation {
 }
 
 #[mcp_tool(
-    name = "search_replace",
+    name = "search_and_replace",
     title = "Search and Replace",
     description = concat!(
         "Search and replace text in a file. ",
@@ -42,7 +40,6 @@ pub struct SearchReplaceTool {
     pub edits: Vec<SearchReplaceOperation>,
     /// Preview changes using git-style diff format without applying them.
     #[serde(
-        rename = "dryRun",
         default,
         skip_serializing_if = "std::option::Option::is_none"
     )]
