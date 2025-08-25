@@ -14,6 +14,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::{
+    error::{ServiceError, ServiceResult},
+    tools::SearchReplaceOperation,
+    tools::EditOperation,
+};
 use async_zip::tokio::{read::seek::ZipFileReader, write::ZipFileWriter};
 use glob::Pattern;
 use rust_mcp_sdk::schema::RpcError;
@@ -28,11 +33,6 @@ use utils::{
     write_zip_entry,
 };
 use walkdir::WalkDir;
-use crate::{
-    error::{ServiceError, ServiceResult},
-    tools::EditOperation,
-    tools::ApplyPatchOperation,
-};
 
 const SNIPPET_MAX_LENGTH: usize = 200;
 const SNIPPET_BACKWARD_CHARS: usize = 30;
@@ -511,13 +511,12 @@ impl FileSystemService {
                     return false;
                 }
 
-                let is_match = glob_pattern
+                glob_pattern
                     .as_ref()
                     .map(|glob| {
                         glob.matches(&entry.file_name().to_str().unwrap_or("").to_lowercase())
                     })
-                    .unwrap_or(false);
-                is_match
+                    .unwrap_or(false)
             });
 
         Ok(result)
@@ -795,10 +794,10 @@ impl FileSystemService {
         Ok(formatted_diff)
     }
 
-    pub async fn apply_patch_edits<P: AsRef<Path>>(
+    pub async fn search_replace_edits<P: AsRef<Path>>(
         &self,
         file_path: P,
-        edits: Vec<ApplyPatchOperation>,
+        edits: Vec<SearchReplaceOperation>,
         dry_run: Option<bool>,
         save_to: Option<&Path>,
     ) -> ServiceResult<String> {
@@ -818,6 +817,7 @@ impl FileSystemService {
                         &edit.old_text,
                         edit.new_text.as_str(),
                         &config,
+                        false, // Don't escape regex patterns
                     )?;
                 }
                 "exact" => {
@@ -862,7 +862,7 @@ impl FileSystemService {
     pub fn escape_regex(&self, text: &str) -> String {
         // Covers special characters in regex engines (RE2, PCRE, JS, Python)
         const SPECIAL_CHARS: &[char] = &[
-            '.', '^', '$', '*', '+', '?', '(', ')', '[', ']', '{', '}', '\\', '|', '/',
+            '.', '^', '$', '*', '+', '?', '(', ')', '[', ']', '{', '}', '\\', '|',
         ];
 
         let mut escaped = String::with_capacity(text.len());
@@ -884,11 +884,12 @@ impl FileSystemService {
         search_pattern: &str,
         replacement_text: &str,
         config: &RegexReplacementConfig,
+        escape_pattern: bool,
     ) -> ServiceResult<String> {
         // Early validation - check for empty search pattern
         if search_pattern.is_empty() {
             return Err(ServiceError::FromString(
-                "Cannot perform regex replacement with empty search pattern".to_string()
+                "Cannot perform regex replacement with empty search pattern".to_string(),
             ));
         }
 
@@ -901,32 +902,38 @@ impl FileSystemService {
             )));
         }
 
-        // Escape the search pattern and validate its complexity
-        let escaped_pattern = self.escape_regex(search_pattern);
+        // Escape the search pattern only if requested
+        let final_pattern = if escape_pattern {
+            self.escape_regex(search_pattern)
+        } else {
+            search_pattern.to_string()
+        };
 
-        if escaped_pattern.len() > config.max_pattern_length {
+        if final_pattern.len() > config.max_pattern_length {
             return Err(ServiceError::FromString(format!(
-                "Regex pattern too complex: escaped pattern length {} exceeds maximum of {} characters",
-                escaped_pattern.len(),
+                "Regex pattern too complex: pattern length {} exceeds maximum of {} characters",
+                final_pattern.len(),
                 config.max_pattern_length
             )));
         }
 
         // Compile regex with detailed error context
-        let regex = regex::Regex::new(&escaped_pattern)
-            .map_err(|e| {
-                ServiceError::FromString(format!(
-                    "Failed to compile regex pattern '{}': {}. Original search text: '{}'",
-                    escaped_pattern, e, search_pattern
-                ))
-            })?;
+        let regex = regex::Regex::new(&final_pattern).map_err(|e| {
+            ServiceError::FromString(format!(
+                "Failed to compile regex pattern '{final_pattern}': {e}. Original search text: '{search_pattern}'"
+            ))
+        })?;
 
         // Perform the replacement
         let replaced_content = regex.replace_all(content, replacement_text);
         let result_string = replaced_content.into_owned();
 
         // Validate result size to prevent memory exhaustion from replacement
-        let growth_factor = if content.is_empty() { 0 } else { result_string.len() / content.len() };
+        let growth_factor = if content.is_empty() {
+            0
+        } else {
+            result_string.len() / content.len()
+        };
         if growth_factor > config.max_growth_factor {
             return Err(ServiceError::FromString(format!(
                 "Regex replacement resulted in excessive content growth: {}x factor (max allowed: {}x)",

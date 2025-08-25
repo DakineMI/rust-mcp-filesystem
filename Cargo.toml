@@ -1,12 +1,18 @@
 [package]
 name = "rust-mcp-filesystem"
-version = "0.2.2"
-edition = "2021"
-repository = "https://github.com/rust-mcp-stack/rust-mcp-filesystem"
-authors = ["Ali Hashemi"]
-description = "Blazing-fast, asynchronous MCP server for seamless filesystem operations."
+version = "0.2.3+JH"
+edition = "2024"
+repository = "https://github.com/DakineMI/mcp/rust-mcp-filesystem"
+authors = ["Ali Hashemi", "Jonathan Hughes"]
+description = "Blazing-fast, asynchronous MCP server for seamless filesystem operations. (Customized version with search and replace functionality)"
 homepage = "https://github.com/rust-mcp-stack/rust-mcp-filesystem"
+keywords = ["mcp", "filesystem", "server", "async"]
 
+[package.metadata]
+custom_version = true
+custom_enhancements = ["search_and_replace"]
+original_version = "0.2.2"
+build_date = "2025-08-25"
 
 [package.metadata.wix]
 upgrade-guid = "944FE3C9-C8C2-4114-8C8F-5330720E781F"

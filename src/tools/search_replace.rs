@@ -7,8 +7,8 @@ use rust_mcp_sdk::schema::{schema_utils::CallToolError, CallToolResult};
 use crate::fs_service::FileSystemService;
 
 #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, JsonSchema)]
-/// Represents a text replacement operation for apply_patch.
-pub struct ApplyPatchOperation {
+/// Represents a text replacement operation for search_replace.
+pub struct SearchReplaceOperation {
     /// Text to search for - must match exactly or as regex.
     #[serde(rename = "oldText")]
     pub old_text: String,
@@ -21,11 +21,11 @@ pub struct ApplyPatchOperation {
 }
 
 #[mcp_tool(
-    name = "apply_patch",
-    title = "Apply Patch",
+    name = "search_replace",
+    title = "Search and Replace",
     description = concat!(
-        "Apply text replacements to a file. ",
-        "Supports exact or regex matching, with optional dry-run mode. ",
+        "Search and replace text in a file. ",
+        "Supports exact string matching or regex patterns, with optional dry-run mode. ",
         "Returns a git-style diff showing the changes made. ",
         "Only works within allowed directories."
     ),
@@ -35,11 +35,11 @@ pub struct ApplyPatchOperation {
     read_only_hint = false
 )]
 #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug, JsonSchema)]
-pub struct ApplyPatchTool {
+pub struct SearchReplaceTool {
     /// The path of the file to edit.
     pub path: String,
-    /// The list of patch operations to apply.
-    pub edits: Vec<ApplyPatchOperation>,
+    /// The list of search and replace operations to apply.
+    pub edits: Vec<SearchReplaceOperation>,
     /// Preview changes using git-style diff format without applying them.
     #[serde(
         rename = "dryRun",
@@ -49,18 +49,13 @@ pub struct ApplyPatchTool {
     pub dry_run: Option<bool>,
 }
 
-impl ApplyPatchTool {
+impl SearchReplaceTool {
     pub async fn run_tool(
         params: Self,
         context: &FileSystemService,
     ) -> std::result::Result<CallToolResult, CallToolError> {
         let diff = context
-            .apply_patch_edits(
-                Path::new(&params.path),
-                params.edits,
-                params.dry_run,
-                None,
-            )
+            .search_replace_edits(Path::new(&params.path), params.edits, params.dry_run, None)
             .await
             .map_err(CallToolError::new)?;
 

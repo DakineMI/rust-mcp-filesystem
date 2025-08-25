@@ -1093,5 +1093,231 @@ fn search_files_content() {
         .unwrap();
     assert_eq!(results.len(), 2);
     assert_eq!(results[0].matches.len(), 2);
+
+    
     assert_eq!(results[1].matches.len(), 2);
+}#[tokio::test]
+async fn test_search_replace_edits_exact_match() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_patch.txt",
+        "line1\nline2\nline3",
+    );
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: "line2".to_string(),
+        new_text: "line4".to_string(),
+        mode: Some("exact".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(false), None)
+        .await
+        .unwrap();
+
+    assert!(result.contains("Index:"));
+    assert!(result.contains("-line2"));
+    assert!(result.contains("+line4"));
+    let new_content = tokio_fs::read_to_string(&file_path).await.unwrap();
+    assert_eq!(new_content, "line1\nline4\nline3");
+}
+
+#[tokio::test]
+pub async fn test_search_replace_edits_regex_match() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_regex.txt",
+        "line1\nline2\nline3",
+    );
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: r"line\d".to_string(),
+        new_text: "replaced".to_string(),
+        mode: Some("regex".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(false), None)
+        .await
+        .unwrap();
+
+    assert!(result.contains("Index:"));
+    assert!(result.contains("-line1"));
+    assert!(result.contains("+replaced"));
+    let new_content = tokio_fs::read_to_string(&file_path).await.unwrap();
+    assert_eq!(new_content, "replaced\nreplaced\nreplaced");
+}
+
+#[tokio::test]
+async fn test_search_replace_edits_invalid_regex() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_invalid.txt",
+        "some content",
+    );
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: r"[invalid".to_string(), // Invalid regex pattern
+        new_text: "replacement".to_string(),
+        mode: Some("regex".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(false), None)
+        .await;
+
+    assert!(result.is_err());
+    assert!(matches!(result, Err(ServiceError::FromString(_))));
+}
+
+#[tokio::test]
+async fn test_search_replace_edits_empty_pattern() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_empty.txt",
+        "some content",
+    );
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: "".to_string(), // Empty pattern
+        new_text: "replacement".to_string(),
+        mode: Some("regex".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(false), None)
+        .await;
+
+    assert!(result.is_err());
+    assert!(matches!(result, Err(ServiceError::FromString(_))));
+}
+
+#[tokio::test]
+async fn test_search_replace_edits_dry_run() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_dry_run.txt",
+        "original content",
+    );
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: "original".to_string(),
+        new_text: "modified".to_string(),
+        mode: Some("exact".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(true), None)
+        .await
+        .unwrap();
+
+    assert!(result.contains("Index:"));
+    assert!(result.contains("-original"));
+    assert!(result.contains("+modified"));
+    // File should not be modified in dry run
+    let content = tokio_fs::read_to_string(&file_path).await.unwrap();
+    assert_eq!(content, "original content");
+}
+
+#[tokio::test]
+async fn test_search_replace_edits_multiple_operations() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_multiple.txt",
+        "line1\nline2\nline3",
+    );
+
+    let edits = vec![
+        rust_mcp_filesystem::tools::SearchReplaceOperation {
+            old_text: "line1".to_string(),
+            new_text: "first".to_string(),
+            mode: Some("exact".to_string()),
+        },
+        rust_mcp_filesystem::tools::SearchReplaceOperation {
+            old_text: "line3".to_string(),
+            new_text: "third".to_string(),
+            mode: Some("exact".to_string()),
+        },
+    ];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(false), None)
+        .await
+        .unwrap();
+
+    assert!(result.contains("Index:"));
+    assert!(result.contains("-line1"));
+    assert!(result.contains("+first"));
+    assert!(result.contains("-line3"));
+    assert!(result.contains("+third"));
+
+    let new_content = tokio_fs::read_to_string(&file_path).await.unwrap();
+    assert_eq!(new_content, "first\nline2\nthird");
+}
+
+#[tokio::test]
+async fn test_search_replace_edits_no_match() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let file_path = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "test_no_match.txt",
+        "some content",
+    );
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: "nonexistent".to_string(),
+        new_text: "replacement".to_string(),
+        mode: Some("exact".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&file_path, edits, Some(false), None)
+        .await
+        .unwrap();
+
+    // Should still produce a diff, but content should be unchanged
+    assert!(result.contains("Index:"));
+    let content = tokio_fs::read_to_string(&file_path).await.unwrap();
+    assert_eq!(content, "some content");
+}
+
+#[tokio::test]
+async fn test_search_replace_edits_save_to_different_path() {
+    let (temp_dir, service) = setup_service(vec!["dir1".to_string()]);
+    let original_file = create_temp_file(
+        temp_dir.join("dir1").as_path(),
+        "original.txt",
+        "original content",
+    );
+
+    let save_to_file = temp_dir.join("dir1").join("modified.txt");
+
+    let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
+        old_text: "original".to_string(),
+        new_text: "modified".to_string(),
+        mode: Some("exact".to_string()),
+    }];
+
+    let result = service
+        .search_replace_edits(&original_file, edits, Some(false), Some(&save_to_file))
+        .await
+        .unwrap();
+
+    assert!(result.contains("Index:"));
+    assert!(result.contains("-original"));
+    assert!(result.contains("+modified"));
+
+    // Original file should be unchanged
+    let original_content = tokio_fs::read_to_string(&original_file).await.unwrap();
+    assert_eq!(original_content, "original content");
+
+    // New file should have the modifications
+    let modified_content = tokio_fs::read_to_string(&save_to_file).await.unwrap();
+    assert_eq!(modified_content, "modified content");
 }
