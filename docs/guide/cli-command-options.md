@@ -1,4 +1,4 @@
-## CLI Command Options
+# CLI Command Options
 
 ```sh
 Usage: rust-mcp-filesystem [OPTIONS] <ALLOWED_DIRECTORIES>...

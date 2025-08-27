@@ -1,232 +1,34 @@
 # Capabilities
 
+<content"># Capabilities
+
 <!-- mcp-discovery-render -->
-## rust-mcp-filesystem 0.2.1
-| 🟢 Tools (16) | <span style="opacity:0.6">🔴 Prompts</span> | <span style="opacity:0.6">🔴 Resources</span> | <span style="opacity:0.6">🔴 Logging</span> | <span style="opacity:0.6">🔴 Experimental</span> |
+## rust-mcp-filesystem 0.2.3
+
+| 🟢 Tools (17) | 🔴 Prompts | 🔴 Resources | 🔴 Logging | 🔴 Experimental |
 | --- | --- | --- | --- | --- |
-## 🛠️ Tools (16)
 
-<table style="text-align: left;">
-<thead>
-    <tr>
-        <th style="width: auto;"></th>
-        <th style="width: auto;">Tool Name</th>
-        <th style="width: auto;">Description</th>
-        <th style="width: auto;">Inputs</th>
-    </tr>
-</thead>
-<tbody style="vertical-align: top;">
-        <tr>
-            <td>1.</td>
-            <td>
-                <code><b>create_directory</b></code>
-            </td>
-            <td>Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>2.</td>
-            <td>
-                <code><b>directory_tree</b></code>
-            </td>
-            <td>Get a recursive tree view of files and directories as a JSON structure. Each entry includes <code>name</code>, <code>type</code> (file/directory), and <code>children</code> for directories. Files have no children array, while directories always have a children array (which may be empty). If the <code>max_depth</code> parameter is provided, the traversal will be limited to the specified depth. As a result, the returned directory structure may be incomplete or provide a skewed representation of the full directory tree, since deeper-level files and subdirectories beyond the specified depth will be excluded. The output is formatted with 2-space indentation for readability. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>max_depth</code> : number<br /></li>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>3.</td>
-            <td>
-                <code><b>edit_file</b></code>
-            </td>
-            <td>Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>dryRun</code> : boolean<br /></li>
-                    <li> <code>edits</code> : {newText : string, oldText : string} [ ]<br /></li>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>4.</td>
-            <td>
-                <code><b>get_file_info</b></code>
-            </td>
-            <td>Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>5.</td>
-            <td>
-                <code><b>list_allowed_directories</b></code>
-            </td>
-            <td>Returns a list of directories that the server has permission to access Subdirectories within these allowed directories are also accessible. Use this to identify which directories and their nested paths are available before attempting to access files.</td>
-            <td>
-                <ul>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>6.</td>
-            <td>
-                <code><b>list_directory</b></code>
-            </td>
-            <td>Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with <code>FILE</code> and <code>DIR</code> prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>7.</td>
-            <td>
-                <code><b>list_directory_with_sizes</b></code>
-            </td>
-            <td>Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with <code>FILE</code> and <code>DIR</code> prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>8.</td>
-            <td>
-                <code><b>move_file</b></code>
-            </td>
-            <td>Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>destination</code> : string<br /></li>
-                    <li> <code>source</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>9.</td>
-            <td>
-                <code><b>read_file</b></code>
-            </td>
-            <td>Read the complete contents of a file from the file system. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>10.</td>
-            <td>
-                <code><b>read_multiple_files</b></code>
-            </td>
-            <td>Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>paths</code> : string [ ]<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>11.</td>
-            <td>
-                <code><b>search_files</b></code>
-            </td>
-            <td>Recursively search for files and directories matching a pattern. Searches through all subdirectories from the starting path. The search is case-insensitive and matches partial names. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>excludePatterns</code> : string [ ]<br /></li>
-                    <li> <code>path</code> : string<br /></li>
-                    <li> <code>pattern</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>12.</td>
-            <td>
-                <code><b>search_files_content</b></code>
-            </td>
-            <td>Searches for text or regex patterns in the content of files matching matching a GLOB pattern.Returns detailed matches with file path, line number, column number and a preview of matched text.By default, it performs a literal text search; if the <code>is_regex</code> parameter is set to true, it performs a regular expression (regex) search instead.Ideal for finding specific code, comments, or text when you don’t know their exact location.</td>
-            <td>
-                <ul>
-                    <li> <code>excludePatterns</code> : string [ ]<br /></li>
-                    <li> <code>is_regex</code> : boolean<br /></li>
-                    <li> <code>path</code> : string<br /></li>
-                    <li> <code>pattern</code> : string<br /></li>
-                    <li> <code>query</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>13.</td>
-            <td>
-                <code><b>unzip_file</b></code>
-            </td>
-            <td>Extracts the contents of a ZIP archive to a specified target directory.<br/>It takes a source ZIP file path and a target extraction directory.<br/>The tool decompresses all files and directories stored in the ZIP, recreating their structure in the target location.<br/>Both the source ZIP file and the target directory should reside within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>target_path</code> : string<br /></li>
-                    <li> <code>zip_file</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>14.</td>
-            <td>
-                <code><b>write_file</b></code>
-            </td>
-            <td>Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>content</code> : string<br /></li>
-                    <li> <code>path</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>15.</td>
-            <td>
-                <code><b>zip_directory</b></code>
-            </td>
-            <td>Creates a ZIP archive by compressing a directory , including files and subdirectories matching a specified glob pattern.<br/>It takes a path to the folder and a glob pattern to identify files to compress and a target path for the resulting ZIP file.<br/>Both the source directory and the target ZIP file should reside within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>input_directory</code> : string<br /></li>
-                    <li> <code>pattern</code> : string<br /></li>
-                    <li> <code>target_zip_file</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td>16.</td>
-            <td>
-                <code><b>zip_files</b></code>
-            </td>
-            <td>Creates a ZIP archive by compressing files. It takes a list of files to compress and a target path for the resulting ZIP file. Both the source files and the target ZIP file should reside within allowed directories.</td>
-            <td>
-                <ul>
-                    <li> <code>input_files</code> : string [ ]<br /></li>
-                    <li> <code>target_zip_file</code> : string<br /></li>
-                </ul>
-            </td>
-        </tr>
-</tbody>
-</table>
+## 🛠️ Tools (17)
 
+| # | Tool Name | Description | Inputs |
+|---|-----------|-------------|---------|
+| 1. | **create_directory** | Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories. | `path` : string |
+| 2. | **directory_tree** | Get a recursive tree view of files and directories as a JSON structure. Each entry includes `name`, `type` (file/directory), and `children` for directories. Files have no children array, while directories always have a children array (which may be empty). If the `max_depth` parameter is provided, the traversal will be limited to the specified depth. As a result, the returned directory structure may be incomplete or provide a skewed representation of the full directory tree, since deeper-level files and subdirectories beyond the specified depth will be excluded. The output is formatted with 2-space indentation for readability. Only works within allowed directories. | `max_depth`: number, `path`: string |
+| 3. | **edit_file** | Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories. | `dryRun`: boolean, `edits`: {newText: string, oldText: string}[], `path`: string |
+| 4. | **get_file_info** | Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories. | `path` : string |
+| 5. | **list_allowed_directories** | Returns a list of directories that the server has permission to access Subdirectories within these allowed directories are also accessible. Use this to identify which directories and their nested paths are available before attempting to access files. |  |
+| 6. | **list_directory** | Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with `FILE` and `DIR` prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories. | `path` : string |
+| 7. | **list_directory_with_sizes** | Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with `FILE` and `DIR` prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories. | `path` : string |
+| 8. | **move_file** | Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories. | `destination`: string, `source`: string |
+| 9. | **read_file** | Read the complete contents of a file from the file system. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Only works within allowed directories. | `path` : string |
+| 10. | **read_multiple_files** | Read the contents of multiple files simultaneously. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories. | `paths` : string [ ] |
+| 11. | **search_files** | Recursively search for files and directories matching a pattern. Searches through all subdirectories from the starting path. The search is case-insensitive and matches partial names. Returns full paths to all matching items. Great for finding files when you don't know their exact location. Only searches within allowed directories. | `excludePatterns`: string[], `path`: string, `pattern`: string |
+| 12. | **search_files_content** | Searches for text or regex patterns in the content of files matching matching a GLOB pattern.Returns detailed matches with file path, line number, column number and a preview of matched text.By default, it performs a literal text search; if the `is_regex` parameter is set to true, it performs a regular expression (regex) search instead.Ideal for finding specific code, comments, or text when you don't know their exact location. | `excludePatterns`: string[], `is_regex`: boolean, `path`: string, `pattern`: string, `query`: string |
+| 13. | **unzip_file** | Extracts the contents of a ZIP archive to a specified target directory. It takes a source ZIP file path and a target extraction directory. The tool decompresses all files and directories stored in the ZIP, recreating their structure in the target location. Both the source ZIP file and the target directory should reside within allowed directories. | `target_path`: string, `zip_file`: string |
+| 14. | **write_file** | Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories. | `content`: string, `path`: string |
+| 15. | **zip_directory** | Creates a ZIP archive by compressing a directory , including files and subdirectories matching a specified glob pattern. It takes a path to the folder and a glob pattern to identify files to compress and a target path for the resulting ZIP file. Both the source directory and the target ZIP file should reside within allowed directories. | `input_directory`: string, `pattern`: string, `target_zip_file`: string |
+| 16. | **zip_files** | Creates a ZIP archive by compressing files. It takes a list of files to compress and a target path for the resulting ZIP file. Both the source files and the target ZIP file should reside within allowed directories. | `input_files`: string[], `target_zip_file`: string |
+| 17. | **list_code_definition_names** | List definition names (classes, functions, methods, etc.) from source code with hardware acceleration. This tool can analyze either a single file or all files at the top level of a specified directory. It provides insights into the codebase structure and important constructs, utilizing SIMD operations (AVX2/SSE4.2) for enhanced performance on x86_64 systems. Perfect for understanding large codebases and extracting structural information efficiently. | `hardware_accelerated`: boolean, `path`: string, `zero_copy`: boolean |
 
-
-
-<sup>◾ generated by [mcp-discovery](https://github.com/rust-mcp-stack/mcp-discovery)</sup>
+◾ generated by [mcp-discovery](https://github.com/rust-mcp-stack/mcp-discovery)
 <!-- mcp-discovery-render-end -->

@@ -1,0 +1,39 @@
+[package]
+name = "rust-mcp-filesystem"
+version = "0.2.3"
+edition = "2021"
+authors = ["Rust MCP Stack"]
+description = "A blazingly fast, asynchronous MCP filesystem server with advanced performance optimizations"
+license = "MIT"
+homepage = "https://rust-mcp-stack.github.io/rust-mcp-filesystem"
+repository = "https://github.com/rust-mcp-stack/rust-mcp-filesystem"
+readme = "README.md"
+keywords = ["mcp", "filesystem", "async", "performance", "rust"]
+categories = ["filesystem", "api-bindings", "asynchronous"]
+
+[dependencies]
+# ... existing dependencies ...
+
+[dev-dependencies]
+# ... existing dev-dependencies ...
+
+[features]
+default = ["parallel", "compression", "simd"]
+parallel = ["rayon"]
+compression = ["lz4_flex"]
+simd = []
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
+
+[workspace]
+members = ["."]

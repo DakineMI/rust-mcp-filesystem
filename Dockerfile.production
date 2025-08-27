@@ -1,0 +1,66 @@
+ockerfile.production</path>
+<content"># Multi-stage build for optimal performance and security
+FROM rust:1.70-slim AS builder
+
+# Install required packages for building
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/app
+
+# Copy dependency files first for better caching
+COPY Cargo.toml Cargo.lock ./
+
+# Create dummy main.rs to build dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release && rm -rf src/
+
+# Copy source code
+COPY src ./src
+
+# Build the application with optimizations
+ENV RUSTFLAGS="-C target-cpu=haswell -C opt-level=3 -C lto=fat"
+RUN cargo build --release
+
+# Runtime stage - minimal footprint
+FROM debian:bookworm-slim
+
+# Install only essential runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root user for security
+RUN groupadd -r mcp && useradd -r -g mcp mcp
+
+WORKDIR /app
+
+# Copy the binary from builder stage
+COPY --from=builder /usr/src/app/target/release/rust-mcp-filesystem .
+
+# Set proper permissions
+RUN chown -R mcp:mcp /app
+USER mcp
+
+# Expose default port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Default configuration optimized for containers
+ENV MCP_ENABLE_SIMD=true
+ENV MCP_ENABLE_COMPRESSION=true
+ENV MCP_ENABLE_PARALLEL=true
+ENV MCP_MAX_WORKERS=0
+ENV MCP_MEMORY_LIMIT=1073741824
+ENV MCP_MAX_MEMORY_MAP_SIZE=536870912
+ENV RUST_LOG=info
+
+# Run the application
+ENTRYPOINT ["./rust-mcp-filesystem"]
+CMD ["--port", "3000"]

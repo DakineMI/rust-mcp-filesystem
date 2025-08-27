@@ -1,4 +1,4 @@
-<!-- _coverpage.md -->
+# Rust MCP Filesystem Cover
 
 <!-- ![logo](_media/rust-mcp-filesystem.png) -->
 
@@ -6,7 +6,7 @@
 
 <!-- x-release-please-start-version -->
 
-# Rust MCP FileSystem (v0.2.2)
+## Rust MCP FileSystem (v0.2.2)
 
 <!-- x-release-please-end -->
 
@@ -18,7 +18,7 @@
 
 [GitHub](https://github.com/rust-mcp-stack/rust-mcp-filesystem)
 [⚙️ Capabilities](capabilities.md)
-[Get Started](#rust-mcp-filesystem)
+[Get Started](rust-mcp-filesystem)
 
 <!-- background color -->
 
