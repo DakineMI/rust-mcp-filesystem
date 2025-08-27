@@ -1106,9 +1106,12 @@ async fn test_search_replace_edits_exact_match() {
     );
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: "line2".to_string(),
-        new_text: "line4".to_string(),
-        mode: Some("exact".to_string()),
+        search: "line2".to_string(),
+        replace: "line4".to_string(),
+        use_regex: Some(false),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service
@@ -1133,9 +1136,12 @@ pub async fn test_search_replace_edits_regex_match() {
     );
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: r"line\d".to_string(),
-        new_text: "replaced".to_string(),
-        mode: Some("regex".to_string()),
+        search: r"line\d".to_string(),
+        replace: "replaced".to_string(),
+        use_regex: Some(true),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service
@@ -1160,9 +1166,12 @@ async fn test_search_replace_edits_invalid_regex() {
     );
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: r"[invalid".to_string(), // Invalid regex pattern
-        new_text: "replacement".to_string(),
-        mode: Some("regex".to_string()),
+        search: r"[invalid".to_string(), // Invalid regex pattern
+        replace: "replacement".to_string(),
+        use_regex: Some(true),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service
@@ -1183,9 +1192,12 @@ async fn test_search_replace_edits_empty_pattern() {
     );
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: "".to_string(), // Empty pattern
-        new_text: "replacement".to_string(),
-        mode: Some("regex".to_string()),
+        search: "".to_string(), // Empty pattern
+        replace: "replacement".to_string(),
+        use_regex: Some(true),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service
@@ -1206,9 +1218,12 @@ async fn test_search_replace_edits_dry_run() {
     );
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: "original".to_string(),
-        new_text: "modified".to_string(),
-        mode: Some("exact".to_string()),
+        search: "original".to_string(),
+        replace: "modified".to_string(),
+        use_regex: Some(false),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service
@@ -1235,14 +1250,20 @@ async fn test_search_replace_edits_multiple_operations() {
 
     let edits = vec![
         rust_mcp_filesystem::tools::SearchReplaceOperation {
-            old_text: "line1".to_string(),
-            new_text: "first".to_string(),
-            mode: Some("exact".to_string()),
+            search: "line1".to_string(),
+            replace: "first".to_string(),
+            use_regex: Some(false),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
         },
         rust_mcp_filesystem::tools::SearchReplaceOperation {
-            old_text: "line3".to_string(),
-            new_text: "third".to_string(),
-            mode: Some("exact".to_string()),
+            search: "line3".to_string(),
+            replace: "third".to_string(),
+            use_regex: Some(false),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
         },
     ];
 
@@ -1271,9 +1292,12 @@ async fn test_search_replace_edits_no_match() {
     );
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: "nonexistent".to_string(),
-        new_text: "replacement".to_string(),
-        mode: Some("exact".to_string()),
+        search: "nonexistent".to_string(),
+        replace: "replacement".to_string(),
+        use_regex: Some(false),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service
@@ -1299,9 +1323,12 @@ async fn test_search_replace_edits_save_to_different_path() {
     let save_to_file = temp_dir.join("dir1").join("modified.txt");
 
     let edits = vec![rust_mcp_filesystem::tools::SearchReplaceOperation {
-        old_text: "original".to_string(),
-        new_text: "modified".to_string(),
-        mode: Some("exact".to_string()),
+        search: "original".to_string(),
+        replace: "modified".to_string(),
+        use_regex: Some(false),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
 
     let result = service

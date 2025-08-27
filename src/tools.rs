@@ -13,8 +13,12 @@ mod search_file;
 mod search_files_content;
 mod write_file;
 mod zip_unzip;
+mod list_files;
+mod apply_diff;
+mod insert_content;
+mod list_code_definition_names;
 
-pub use search_replace::{SearchReplaceOperation, SearchReplaceTool};
+pub use search_and_replace::{SearchReplaceOperation, SearchReplaceTool};
 pub use create_directory::CreateDirectoryTool;
 pub use directory_tree::DirectoryTreeTool;
 pub use edit_file::{EditFileTool, EditOperation};
@@ -30,6 +34,10 @@ pub use search_file::SearchFilesTool;
 pub use search_files_content::SearchFilesContentTool;
 pub use write_file::WriteFileTool;
 pub use zip_unzip::{UnzipFileTool, ZipDirectoryTool, ZipFilesTool};
+pub use list_files::ListFilesTool;
+pub use apply_diff::ApplyDiffTool;
+pub use insert_content::InsertContentTool;
+pub use list_code_definition_names::ListCodeDefinitionNamesTool;
 
 //Generate FileSystemTools enum , tools() function, and TryFrom<CallToolRequestParams> trait implementation
 tool_box!(
@@ -51,7 +59,11 @@ tool_box!(
         UnzipFileTool,
         ZipDirectoryTool,
         SearchFilesContentTool,
-        ListDirectoryWithSizesTool
+        ListDirectoryWithSizesTool,
+        ListFilesTool,
+        ApplyDiffTool,
+        InsertContentTool,
+        ListCodeDefinitionNamesTool
     ]
 );
 
@@ -67,7 +79,9 @@ impl FileSystemTools {
             | FileSystemTools::SearchReplaceTool(_)
             | FileSystemTools::ZipFilesTool(_)
             | FileSystemTools::UnzipFileTool(_)
-            | FileSystemTools::ZipDirectoryTool(_) => true,
+            | FileSystemTools::ZipDirectoryTool(_)
+            | FileSystemTools::ApplyDiffTool(_)
+            | FileSystemTools::InsertContentTool(_) => true,
             FileSystemTools::ReadFileTool(_)
             | FileSystemTools::DirectoryTreeTool(_)
             | FileSystemTools::GetFileInfoTool(_)
@@ -76,7 +90,9 @@ impl FileSystemTools {
             | FileSystemTools::ReadMultipleFilesTool(_)
             | FileSystemTools::SearchFilesContentTool(_)
             | FileSystemTools::ListDirectoryWithSizesTool(_)
-            | FileSystemTools::SearchFilesTool(_) => false,
+            | FileSystemTools::SearchFilesTool(_)
+            | FileSystemTools::ListFilesTool(_)
+            | FileSystemTools::ListCodeDefinitionNamesTool(_) => false,
         }
     }
 }

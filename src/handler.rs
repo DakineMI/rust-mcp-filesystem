@@ -232,6 +232,18 @@ impl ServerHandler for MyServerHandler {
             FileSystemTools::ListDirectoryWithSizesTool(params) => {
                 ListDirectoryWithSizesTool::run_tool(params, &self.fs_service).await
             }
+            FileSystemTools::ListFilesTool(params) => {
+                ListFilesTool::run_tool(params, &self.fs_service).await
+            }
+            FileSystemTools::ApplyDiffTool(params) => {
+                ApplyDiffTool::run_tool(params, &self.fs_service).await
+            }
+            FileSystemTools::InsertContentTool(params) => {
+                InsertContentTool::run_tool(params, &self.fs_service).await
+            }
+            FileSystemTools::ListCodeDefinitionNamesTool(params) => {
+                ListCodeDefinitionNamesTool::run_tool(params, &self.fs_service).await
+            }
         }
     }
 }

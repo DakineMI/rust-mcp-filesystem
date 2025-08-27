@@ -42,9 +42,12 @@ async fn test_regex_replacement_functionality() {
     // Test valid regex replacement
     use rust_mcp_filesystem::tools::SearchReplaceOperation;
     let edits = vec![SearchReplaceOperation {
-        old_text: r"line\d".to_string(),
-        new_text: "replaced".to_string(),
-        mode: Some("regex".to_string()),
+        search: r"line\d".to_string(),
+        replace: "replaced".to_string(),
+        use_regex: Some(true),
+        start_line: None,
+        end_line: None,
+        ignore_case: None,
     }];
     
     let result = service.search_replace_edits(&test_file, edits, Some(false), None).await;

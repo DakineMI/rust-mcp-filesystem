@@ -10,12 +10,21 @@ use crate::fs_service::FileSystemService;
 /// Represents a text replacement operation for search_and_replace.
 pub struct SearchReplaceOperation {
     /// Text to search for - must match exactly or as regex.
-    pub old_text: String,
+    pub search: String,
     /// Text to replace the matched text with.
-    pub new_text: String,
-    /// Mode: "exact" (default) or "regex".
+    pub replace: String,
+    /// Whether to treat search as a regex pattern (default: false)
     #[serde(default)]
-    pub mode: Option<String>,
+    pub use_regex: Option<bool>,
+    /// Starting line number for restricted replacement (1-based)
+    #[serde(default)]
+    pub start_line: Option<u64>,
+    /// Ending line number for restricted replacement (1-based)
+    #[serde(default)]
+    pub end_line: Option<u64>,
+    /// Whether to ignore case when matching (default: false)
+    #[serde(default)]
+    pub ignore_case: Option<bool>,
 }
 
 #[mcp_tool(
@@ -25,21 +34,7 @@ pub struct SearchReplaceOperation {
         "Search and replace text in a file. ",
         "Supports exact string matching or regex patterns, with optional dry-run mode. ",
         "Returns a git-style diff showing the changes made. ",
-        "Only works within allowed directories.",
-        "Example:",
-        "
-        {
-            \"path\": \"path/to/file.txt\",
-            \"edits\": [
-                {
-                    \"old_text\": \"foo\",
-                    \"new_text\": \"bar\",
-                    \"mode\": \"exact\"
-                }
-            ],
-            \"dry_run\": true
-        }
-        "
+        "Only works within allowed directories."
     ),
     destructive_hint = false,
     idempotent_hint = false,

@@ -1,4 +1,6 @@
+pub mod benchmarks;
 pub mod cli;
+pub mod config;
 pub mod error;
 pub mod fs_service;
 pub mod handler;

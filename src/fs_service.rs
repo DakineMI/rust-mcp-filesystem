@@ -808,23 +808,20 @@ impl FileSystemService {
         let mut modified_content = content_str.clone();
 
         for edit in edits {
-            let mode = edit.mode.as_deref().unwrap_or("exact");
-            match mode {
-                "regex" => {
+            let use_regex = edit.use_regex.unwrap_or(false);
+            match use_regex {
+                true => {
                     let config = RegexReplacementConfig::default();
                     modified_content = self.perform_regex_replacement(
                         &modified_content,
-                        &edit.old_text,
-                        edit.new_text.as_str(),
+                        &edit.search,
+                        edit.replace.as_str(),
                         &config,
                         false, // Don't escape regex patterns
                     )?;
                 }
-                "exact" => {
-                    modified_content = modified_content.replace(&edit.old_text, &edit.new_text);
-                }
-                _ => {
-                    return Err(ServiceError::FromString("Unknown mode".to_string()));
+                false => {
+                    modified_content = modified_content.replace(&edit.search, &edit.replace);
                 }
             }
         }
