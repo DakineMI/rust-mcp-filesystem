@@ -51,8 +51,11 @@ impl PerformanceBenchmarks {
         let mut results = Vec::new();
 
         for &count in &entry_counts {
-            // Create test directory with files
-            let test_dir = self.temp_dir.path().join(format!("test_dir_{}", count));
+            // Create test directory with files (with unique names to avoid conflicts)
+            let test_dir = self.temp_dir.path().join(format!("test_dir_{}_{}", count, std::process::id()));
+            if test_dir.exists() {
+                fs::remove_dir_all(&test_dir).ok(); // Clean up if exists
+            }
             fs::create_dir(&test_dir).expect("Failed to create test directory");
 
             for i in 0..count {
@@ -71,6 +74,9 @@ impl PerformanceBenchmarks {
                 throughput: count as f64 / duration.as_secs_f64(),
                 memory_usage: count * 256, // Estimate memory usage
             });
+
+            // Clean up
+            fs::remove_dir_all(&test_dir).ok();
         }
 
         BenchmarkResult {
