@@ -44,42 +44,98 @@ impl Default for PerformanceConfig {
 }
 
 impl PerformanceConfig {
-    /// Load configuration from environment variables
+    /// Load configuration from environment variables with validation
     pub fn from_env() -> Self {
         let mut config = Self::default();
 
-        if let Ok(val) = env::var("MCP_ENABLE_STREAMING") {
-            config.enable_streaming = val.parse().unwrap_or(true);
-        }
-        if let Ok(val) = env::var("MCP_ENABLE_COMPRESSION") {
-            config.enable_compression = val.parse().unwrap_or(true);
-        }
-        if let Ok(val) = env::var("MCP_ENABLE_PARALLEL") {
-            config.enable_parallel_processing = val.parse().unwrap_or(true);
-        }
-        if let Ok(val) = env::var("MCP_MAX_MEMORY_MAP_SIZE") {
-            config.max_file_size_for_memory_map = val.parse().unwrap_or(500 * 1024 * 1024);
-        }
-        if let Ok(val) = env::var("MCP_COMPRESSION_THRESHOLD") {
-            config.compression_threshold = val.parse().unwrap_or(4096);
-        }
-        if let Ok(val) = env::var("MCP_PARALLEL_THRESHOLD") {
-            config.parallel_threshold = val.parse().unwrap_or(10000);
-        }
-        if let Ok(val) = env::var("MCP_MAX_WORKERS") {
-            config.max_parallel_workers = val.parse().unwrap_or(0);
-        }
-        if let Ok(val) = env::var("MCP_ENABLE_SIMD") {
-            config.enable_simd = val.parse().unwrap_or(true);
-        }
-        if let Ok(val) = env::var("MCP_MEMORY_LIMIT") {
-            config.memory_limit = val.parse().unwrap_or(0);
-        }
-        if let Ok(val) = env::var("MCP_PERFORMANCE_LOGGING") {
-            config.enable_performance_logging = val.parse().unwrap_or(false);
-        }
+        // Boolean configurations
+        config.enable_streaming = Self::parse_bool_env("MCP_ENABLE_STREAMING", true);
+        config.enable_compression = Self::parse_bool_env("MCP_ENABLE_COMPRESSION", true);
+        config.enable_parallel_processing = Self::parse_bool_env("MCP_ENABLE_PARALLEL", true);
+        config.enable_simd = Self::parse_bool_env("MCP_ENABLE_SIMD", true);
+        config.enable_performance_logging = Self::parse_bool_env("MCP_PERFORMANCE_LOGGING", false);
+
+        // Size configurations with validation
+        config.max_file_size_for_memory_map = Self::parse_size_env("MCP_MAX_MEMORY_MAP_SIZE", 500 * 1024 * 1024);
+        config.compression_threshold = Self::parse_size_env("MCP_COMPRESSION_THRESHOLD", 4096) as usize;
+        config.parallel_threshold = Self::parse_size_env("MCP_PARALLEL_THRESHOLD", 10000) as usize;
+        config.max_parallel_workers = Self::parse_workers_env("MCP_MAX_WORKERS", 0);
+        config.memory_limit = Self::parse_size_env("MCP_MEMORY_LIMIT", 0);
+
+        // Validate final configuration
+        config.validate();
 
         config
+    }
+
+    /// Parse boolean environment variable with fallback
+    fn parse_bool_env(var_name: &str, default: bool) -> bool {
+        match env::var(var_name) {
+            Ok(val) => val.parse().unwrap_or_else(|_| {
+                eprintln!("Warning: Invalid boolean value for {}: '{}', using default: {}", var_name, val, default);
+                default
+            }),
+            Err(_) => default,
+        }
+    }
+
+    /// Parse size environment variable with validation (bytes)
+    fn parse_size_env(var_name: &str, default: u64) -> u64 {
+        match env::var(var_name) {
+            Ok(val) => match val.parse::<u64>() {
+                Ok(size) if size <= 10 * 1024 * 1024 * 1024 => size, // Max 10GB
+                Ok(size) => {
+                    eprintln!("Warning: {} value too large: {} bytes, capping at 10GB", var_name, size);
+                    10 * 1024 * 1024 * 1024
+                }
+                Err(_) => {
+                    eprintln!("Warning: Invalid size value for {}: '{}', using default: {} bytes", var_name, val, default);
+                    default
+                }
+            },
+            Err(_) => default,
+        }
+    }
+
+    /// Parse worker count with CPU core validation
+    fn parse_workers_env(var_name: &str, default: usize) -> usize {
+        match env::var(var_name) {
+            Ok(val) => match val.parse::<usize>() {
+                Ok(workers) => {
+                    let max_workers = num_cpus::get() * 2; // Allow up to 2x CPU cores
+                    if workers > max_workers {
+                        eprintln!("Warning: {} value too high: {}, capping at {}", var_name, workers, max_workers);
+                        max_workers
+                    } else {
+                        workers
+                    }
+                }
+                Err(_) => {
+                    eprintln!("Warning: Invalid worker count for {}: '{}', using default: {}", var_name, val, default);
+                    default
+                }
+            },
+            Err(_) => default,
+        }
+    }
+
+    /// Validate configuration values
+    fn validate(&mut self) {
+        // Ensure reasonable minimums
+        self.compression_threshold = self.compression_threshold.max(1024); // Min 1KB
+        self.parallel_threshold = self.parallel_threshold.max(1000); // Min 1KB
+        self.max_file_size_for_memory_map = self.max_file_size_for_memory_map.max(1024 * 1024); // Min 1MB
+
+        // Ensure memory map size is reasonable relative to memory limit
+        if self.memory_limit > 0 && self.max_file_size_for_memory_map > self.memory_limit / 4 {
+            self.max_file_size_for_memory_map = self.memory_limit / 4;
+            eprintln!("Warning: Adjusted memory map size to fit within memory limit");
+        }
+
+        // Ensure worker count is reasonable
+        if self.max_parallel_workers > 0 && self.max_parallel_workers < 1 {
+            self.max_parallel_workers = 1;
+        }
     }
 
     /// Get the number of parallel workers to use

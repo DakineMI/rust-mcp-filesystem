@@ -137,25 +137,6 @@ impl ListCodeDefinitionNamesTool {
         Ok(all_definitions)
     }
 
-    // Synchronous optimized version for parallel processing
-    fn analyze_file_sync_optimized(file_path: std::path::PathBuf, zero_copy: bool) -> Result<Vec<CodeDefinition>, CallToolError> {
-        if let Ok(content) = std::fs::read_to_string(&file_path) {
-            // Early return for empty or very large files
-            if content.is_empty() || content.len() > 10 * 1024 * 1024 {
-                return Ok(Vec::new());
-            }
-
-            let definitions = if zero_copy {
-                Self::extract_definitions_zero_copy(&content)
-            } else {
-                Self::extract_definitions(&content, file_path.display().to_string())
-            };
-
-            Ok(definitions)
-        } else {
-            Ok(Vec::new())
-        }
-    }
 
     async fn analyze_file_optimized(
         file_path: std::path::PathBuf,
@@ -192,7 +173,7 @@ impl ListCodeDefinitionNamesTool {
 
     // Hardware-accelerated extraction using SIMD-like operations
     fn extract_definitions_hardware_accelerated(content: &str, _file_name: String) -> Vec<CodeDefinition> {
-        let mut definitions: Vec<CodeDefinition> = Vec::new();
+        let _definitions: Vec<CodeDefinition> = Vec::new();
 
         // Use optimized pattern matching with hardware acceleration hints
         #[cfg(target_arch = "x86_64")]
@@ -321,6 +302,7 @@ impl ListCodeDefinitionNamesTool {
     }
 
     // Helper functions for AVX2 processing
+    #[cfg_attr(not(target_arch = "x86_64"), allow(dead_code))]
     fn find_function_end(content: &str) -> Option<usize> {
         let mut brace_count = 0;
         let mut in_function = false;
@@ -349,6 +331,7 @@ impl ListCodeDefinitionNamesTool {
         None
     }
 
+    #[cfg_attr(not(target_arch = "x86_64"), allow(dead_code))]
     fn extract_single_definition(content: &str) -> Option<CodeDefinition> {
         // Simple extraction for SIMD-found patterns
         if let Some(fn_match) = content.find("fn ") {

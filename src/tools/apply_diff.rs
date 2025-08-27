@@ -131,10 +131,8 @@ impl ApplyDiffTool {
         content: &str,
         old_content: &str,
         new_content: &str,
-        start_line: u64,
+        _start_line: u64,
     ) -> std::result::Result<String, CallToolError> {
-        let start_line_idx = (start_line as usize).saturating_sub(1); // Convert to 0-based
-
         // Find the exact match
         if let Some(pos) = content.find(old_content) {
             let before = &content[..pos];

@@ -1,6 +1,5 @@
 use std::time::{Duration, Instant};
 use std::fs;
-use std::path::Path;
 use tempfile::TempDir;
 
 /// Performance benchmark suite for MCP filesystem optimizations

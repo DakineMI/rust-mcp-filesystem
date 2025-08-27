@@ -251,7 +251,7 @@ impl ListFilesTool {
 
     // Advanced compression for large listings
     fn compress_listing(listing: &str) -> std::result::Result<String, CallToolError> {
-        use lz4_flex::{compress_prepend_size, decompress_size_prepended};
+        use lz4_flex::compress_prepend_size;
 
         let compressed = compress_prepend_size(listing.as_bytes());
 
@@ -265,6 +265,7 @@ impl ListFilesTool {
     }
 
     // Decompress listing (for internal use)
+    #[allow(dead_code)]
     fn decompress_listing(compressed: &str) -> std::result::Result<String, CallToolError> {
         use lz4_flex::decompress_size_prepended;
 

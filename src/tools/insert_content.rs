@@ -65,8 +65,8 @@ impl InsertContentTool {
     }
 
     async fn insert_content_streaming(
-        valid_path: std::path::PathBuf,
-        params: Self,
+        _valid_path: std::path::PathBuf,
+        _params: Self,
     ) -> std::result::Result<CallToolResult, CallToolError> {
         // For very large files, we'd need to implement streaming
         // For now, return an error indicating the file is too large

@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::Path;
 use tempfile::TempDir;
 use rust_mcp_filesystem::config::{PerformanceConfig, HardwareCapabilities, PerformanceMonitor, MemoryEstimator};
 use rust_mcp_filesystem::benchmarks::PerformanceBenchmarks;
@@ -330,7 +329,7 @@ mod load_tests {
         let mut handles = vec![];
         for i in 0..20 {
             let temp_dir = temp_dir.path().to_path_buf();
-            let config = config.clone();
+            let _config = config.clone();
             let permit = semaphore.clone().acquire_owned().await.unwrap();
 
             let handle = tokio::spawn(async move {
