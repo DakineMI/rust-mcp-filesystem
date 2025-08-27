@@ -25,7 +25,21 @@ pub struct SearchReplaceOperation {
         "Search and replace text in a file. ",
         "Supports exact string matching or regex patterns, with optional dry-run mode. ",
         "Returns a git-style diff showing the changes made. ",
-        "Only works within allowed directories."
+        "Only works within allowed directories.",
+        "Example:",
+        "
+        {
+            \"path\": \"path/to/file.txt\",
+            \"edits\": [
+                {
+                    \"old_text\": \"foo\",
+                    \"new_text\": \"bar\",
+                    \"mode\": \"exact\"
+                }
+            ],
+            \"dry_run\": true
+        }
+        "
     ),
     destructive_hint = false,
     idempotent_hint = false,

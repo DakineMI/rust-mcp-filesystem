@@ -21,7 +21,20 @@ pub struct EditOperation {
     description = concat!("Make line-based edits to a text file. ",
     "Each edit replaces exact line sequences with new content. ",
     "Returns a git-style diff showing the changes made. ",
-    "Only works within allowed directories."),
+    "Only works within allowed directories.",
+    "Example:",
+    "
+    {
+        \"path\": \"path/to/file.txt\",
+        \"edits\": [
+            {
+                \"old_text\": \"foo\",
+                \"new_text\": \"bar\"
+            }
+        ]
+    }
+    "
+    ),
     destructive_hint = false,
     idempotent_hint = false,
     open_world_hint = false,
